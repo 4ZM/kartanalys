@@ -4,7 +4,8 @@ angular
   .module('kartanalysApp', [
     'ngAnimate',
     'ngRoute',
-    'ngSanitize'
+    'ngSanitize',
+    'leaflet-directive'
   ])
   .config(function ($routeProvider) {
     $routeProvider
