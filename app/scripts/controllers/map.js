@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('kartanalysApp')
-  .controller('MapCtrl', function ($scope) {
+  .controller('MapCtrl', function ($scope, $http) {
 
     $scope.map = {
       defaults : {
@@ -15,4 +15,20 @@ angular.module('kartanalysApp')
         zoom : 12
       }
     };
+
+    $http.get("/data/valkretsar.geojson").success(function(data, status) {
+      angular.extend($scope, {
+        geojson: {
+          data: data,
+          style: {
+            fillColor: "green",
+            weight: 1,
+            opacity: 1,
+            color: 'red',
+            fillOpacity: 0.0
+          },
+          resetStyleOnMouseout: true
+        }
+      });
+    });
   });
