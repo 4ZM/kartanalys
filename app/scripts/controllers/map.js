@@ -16,6 +16,25 @@ angular.module('kartanalysApp')
       }
     };
 
+    // Parse local CSV file
+    Papa.parse('/data/2014_riksdagsval_per_valdistrikt.skv', {
+      header: true,
+      delimiter: ";",
+      download: true,
+      encoding: "iso-8859-1",
+      complete: function(results) {
+        // Create a dictionary that matches gis-feature names
+        results.dict = {};
+        _(results.data).forEach(function(vd) {
+          results.dict[vd.LAN + vd.KOM + vd.VALDIST] = vd;
+        });
+      }
+    });
+
+    function onEachFeature(feature, layer) {
+      layer.bindPopup(feature.properties.VD + ": " + feature.properties.VD_NAMN);
+    }
+
     $http.get("/data/valkretsar.geojson").success(function(data, status) {
       angular.extend($scope, {
         geojson: {
@@ -27,6 +46,7 @@ angular.module('kartanalysApp')
             color: 'red',
             fillOpacity: 0.0
           },
+          onEachFeature: onEachFeature,
           resetStyleOnMouseout: true
         }
       });
