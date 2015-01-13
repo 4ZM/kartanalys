@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('kartanalysApp')
-  .controller('MapCtrl', function ($scope, $http, $q) {
+  .controller('MapCtrl', function ($scope, $http, $q, ngProgress) {
 
     $scope.map = {
       defaults : {
@@ -16,26 +16,30 @@ angular.module('kartanalysApp')
       }
     };
 
-    var electionData = $q(function(resolve, reject) {
+    var t1 = new Date().getTime();
+    console.log("Start: " + t1);
 
-      // Parse local CSV file
-      Papa.parse('/data/2014_riksdagsval_per_valdistrikt.skv', {
-        header: true,
-        delimiter: ";",
-        download: true,
-        encoding: "iso-8859-1",
-        complete: function(results) {
-          // Create a dictionary that matches gis-feature names
-          results.dict = {};
-          _(results.data).forEach(function(vd) {
-            results.dict[vd.LAN + vd.KOM + vd.VALDIST] = vd;
-          });
-          resolve(results.dict);
-        }
+    var loadElectionData = function(file) {
+      return $q(function(resolve, reject) {
+        var dict = {};
+
+        // Parse local CSV file
+        Papa.parse(file, {
+          header: true,
+          delimiter: ";",
+          download: true,
+          step: function(row) {
+            dict[row.data[0].LAN + row.data[0].KOM + row.data[0].VALDIST] = row.data[0];
+          },
+          complete: function() {
+            console.log("CSV loaded: " + (new Date().getTime() - t1));
+            resolve(dict);
+          }
+        });
       });
-    });
+    };
 
-
+    console.log("WOOP: " + t1);
 
     function onEachFeature(feature, layer) {
       var sdProc = parseFloat(layer.feature.electionData["SD proc"].replace(',', '.'));
@@ -48,13 +52,20 @@ angular.module('kartanalysApp')
       }
     }
 
-    electionData.then(function(electionData) {
+    var makeGeoJson = function(electionData) {
+      console.log("GIS start: " + (new Date().getTime() - t1));
+
       $http.get("/data/valkretsar.geojson").success(function(data, status) {
+
+        console.log("GIS loaded: " + (new Date().getTime() - t1));
+
         _(data.features).forEach(function(f) {
           f.electionData = electionData[f.properties.VD];
         });
 
-        angular.extend($scope, {
+        console.log("GIS instrumented 1: " + (new Date().getTime() - t1));
+
+        var geoJson = {
           geojson: {
             data: data,
             style: {
@@ -66,7 +77,23 @@ angular.module('kartanalysApp')
             onEachFeature: onEachFeature,
             resetStyleOnMouseout: true
           }
-        });
+        };
+
+        console.log("GIS instrumented 2: " + (new Date().getTime() - t1));
+
+        angular.extend($scope, geoJson);
+
+        console.log("GIS done: " + (new Date().getTime() - t1));
       });
-    });
+    };
+
+    console.log("WOOP2: " + t1);
+
+    $scope.load = function() {
+      console.log("loading...");
+      ngProgress.start();
+      loadElectionData('/data/2014_riksdagsval_per_valdistrikt.skv')
+        .then(function(electionData) { makeGeoJson(electionData); })
+        .then(function() { ngProgress.complete(); });
+    };
   });

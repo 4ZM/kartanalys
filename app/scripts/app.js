@@ -5,7 +5,8 @@ angular
     'ngAnimate',
     'ngRoute',
     'ngSanitize',
-    'leaflet-directive'
+    'leaflet-directive',
+    'ngProgress'
   ])
   .config(function ($routeProvider) {
     $routeProvider
