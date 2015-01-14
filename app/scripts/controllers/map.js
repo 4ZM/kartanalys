@@ -10,9 +10,9 @@ angular.module('kartanalysApp')
         zoomControlPosition: 'bottomleft',
       },
       center: {
-        lat : 59.259289,
-        lng : 18.041106,
-        zoom : 12
+        lat : 59.326142,
+        lng : 17.9820525,
+        zoom : 11
       }
     };
 
