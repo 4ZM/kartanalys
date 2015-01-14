@@ -16,84 +16,86 @@ angular.module('kartanalysApp')
       }
     };
 
-    var t1 = new Date().getTime();
-    console.log("Start: " + t1);
+    $scope.busy = false;
 
+    // Parse CSV eleection data from file into a ["LAN + KOM + VALDIST"] dictionary
     var loadElectionData = function(file) {
-      return $q(function(resolve, reject) {
-        var dict = {};
+      var deferred = $q.defer();
 
-        // Parse local CSV file
-        Papa.parse(file, {
-          header: true,
-          delimiter: ";",
-          download: true,
-          step: function(row) {
-            dict[row.data[0].LAN + row.data[0].KOM + row.data[0].VALDIST] = row.data[0];
-          },
-          complete: function() {
-            console.log("CSV loaded: " + (new Date().getTime() - t1));
-            resolve(dict);
-          }
-        });
+      var dict = {};
+
+      // Parse local CSV file
+      Papa.parse(file, {
+        header: true,
+        delimiter: ";",
+        download: true,
+        worker: true,
+        step: function(row) {
+          var data = row.data[0];
+          dict[data.LAN + data.KOM + data.VALDIST] = data;
+        },
+        complete: function() {
+          deferred.resolve(dict);
+        }
       });
+
+      return deferred.promise;
     };
 
-    console.log("WOOP: " + t1);
+    var loadGeoJson = function(electionData) {
+      return $http.get("/data/valkretsar.geojson").then(function(res) {
 
-    function onEachFeature(feature, layer) {
-      var sdProc = parseFloat(layer.feature.electionData["SD proc"].replace(',', '.'));
-      var popupTitle = feature.properties.VD + ": " + feature.properties.VD_NAMN;
-
-      layer.bindPopup(popupTitle + "<br />SD: " + sdProc + "%");
-      if (sdProc > 8.0) {
-        layer.options.fillColor = "blue";
-        layer.options.fillOpacity = 0.5;
-      }
-    }
-
-    var makeGeoJson = function(electionData) {
-      console.log("GIS start: " + (new Date().getTime() - t1));
-
-      $http.get("/data/valkretsar.geojson").success(function(data, status) {
-
-        console.log("GIS loaded: " + (new Date().getTime() - t1));
-
-        _(data.features).forEach(function(f) {
+        _(res.data.features).forEach(function(f) {
           f.electionData = electionData[f.properties.VD];
         });
 
-        console.log("GIS instrumented 1: " + (new Date().getTime() - t1));
-
-        var geoJson = {
-          geojson: {
-            data: data,
-            style: {
-              weight: 1,
-              opacity: 1,
-              color: 'red',
-              fillOpacity: 0
-            },
-            onEachFeature: onEachFeature,
-            resetStyleOnMouseout: true
-          }
-        };
-
-        console.log("GIS instrumented 2: " + (new Date().getTime() - t1));
-
-        angular.extend($scope, geoJson);
-
-        console.log("GIS done: " + (new Date().getTime() - t1));
+        return res.data.features;
       });
     };
 
-    console.log("WOOP2: " + t1);
+    var makeGeoJson = function(data) {
+      var deferred = $q.defer();
+
+      function onEachFeature(feature, layer) {
+        var sdProc = parseFloat(layer.feature.electionData["SD proc"].replace(',', '.'));
+        var popupTitle = feature.properties.VD + ": " + feature.properties.VD_NAMN;
+
+        layer.bindPopup(popupTitle + "<br />SD: " + sdProc + "%");
+        if (sdProc > 8.0) {
+          layer.options.fillColor = "blue";
+          layer.options.fillOpacity = 0.5;
+        }
+      }
+
+      var geoJson = {
+        geojson: {
+          data: data,
+          style: {
+            weight: 1,
+            opacity: 1,
+            color: 'red',
+            fillOpacity: 0
+          },
+          onEachFeature: onEachFeature,
+          resetStyleOnMouseout: true
+        }
+      };
+
+      deferred.resolve(geoJson);
+
+      return deferred.promise;
+    };
 
     $scope.load = function() {
-      console.log("loading...");
+      $scope.busy = true;
       ngProgress.start();
       loadElectionData('/data/2014_riksdagsval_per_valdistrikt.skv')
-        .then(function(electionData) { makeGeoJson(electionData); })
-        .then(function() { ngProgress.complete(); });
+        .then(loadGeoJson)
+        .then(makeGeoJson)
+        .then(function(geoJson) {
+          ngProgress.complete();
+          angular.extend($scope, geoJson);
+          $scope.busy = false;
+        });
     };
   });
