@@ -46,8 +46,12 @@ angular.module('kartanalysApp')
       KD : 'blue'
     };
 
+    var atof = function(str) {
+      return parseFloat(str.replace(',', '.'));
+    };
+
     var updateMinMax = function(party, data) {
-      var proc = parseFloat(data[party + ' proc'].replace(',', '.'));
+      var proc = atof(data[party + ' proc']);
       $scope.minMax[party]['min'] = Math.min($scope.minMax[party]['min'], proc);
       $scope.minMax[party]['max'] = Math.max($scope.minMax[party]['max'], proc);
     };
@@ -110,7 +114,7 @@ angular.module('kartanalysApp')
           $scope.highLevel = $scope.minMax[$scope.party].max;
         }
 
-        var partyProc = parseFloat(layer.feature.electionData[$scope.party + " proc"].replace(',', '.'));
+        var partyProc = atof(layer.feature.electionData[$scope.party + " proc"]);
         var popupTitle = feature.properties.VD + ": " + feature.properties.VD_NAMN;
 
         var val = (partyProc - $scope.lowLevel) / ($scope.highLevel - $scope.lowLevel);
