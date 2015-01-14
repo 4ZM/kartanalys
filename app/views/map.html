@@ -8,7 +8,7 @@
 <br />
 
 <div class="row">
-  <div class="col-md-6">
+  <div class="col-md-2">
     <div class="btn-group dropup">
       <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
         {{party}} &nbsp; <span class="caret"></span>
@@ -19,6 +19,7 @@
         <li><a ng-click="party = 'V'">V</a></li>
         <li><a ng-click="party = 'S'">S</a></li>
         <li><a ng-click="party = 'MP'">MP</a></li>
+        <li><a ng-click="party = 'FI'">FI</a></li>
         <li><a ng-click="party = 'C'">C</a></li>
         <li><a ng-click="party = 'FP'">FP</a></li>
         <li><a ng-click="party = 'M'">M</a></li>
@@ -27,13 +28,25 @@
     </div>
   </div>
 
-  <div class="col-md-6 text-right">
+  <div class="col-md-2">
+    <input type="number" class="form-control" min="0" max="100" ng-model="lowLevel">
+  </div>
+
+  <div class="col-md-2">
+    <input type="number" class="form-control" min="0" max="100" ng-model="highLevel">
+  </div>
+
+  <div class="col-md-2">
+    <input type="checkbox" ng-model="lockHiLow"> Lock levels
+  </div>
+
+  <div class="col-md-4 text-right">
     <button
        type="button"
        class="btn btn-primary"
        ng-click="load()"
        ng-disabled="busy">
-      {{busy ? 'Loading...' : 'Load Data'}}
+      {{busy ? 'Working...' : 'Analyze Data'}}
     </button>
   </div>
 </div>

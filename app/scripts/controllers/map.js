@@ -20,9 +20,41 @@ angular.module('kartanalysApp')
     $scope.lowLevel = 5.0;
     $scope.highLevel = 15.0;
     $scope.party = "SD";
+    $scope.lockHiLow = false;
+
+    $scope.minMax = {
+      SD : { min : 100.0, max : 0.0 },
+      V  : { min : 100.0, max : 0.0 },
+      S  : { min : 100.0, max : 0.0 },
+      MP : { min : 100.0, max : 0.0 },
+      FI : { min : 100.0, max : 0.0 },
+      C  : { min : 100.0, max : 0.0 },
+      FP : { min : 100.0, max : 0.0 },
+      M  : { min : 100.0, max : 0.0 },
+      KD : { min : 100.0, max : 0.0 }
+    };
+
+    var partyColor = {
+      SD : 'blue',
+      V  : 'red',
+      S  : 'red',
+      MP : 'green',
+      FI : '#808',
+      C  : 'blue',
+      FP : 'blue',
+      M  : 'blue',
+      KD : 'blue'
+    };
+
+    var updateMinMax = function(party, data) {
+      var proc = parseFloat(data[party + ' proc'].replace(',', '.'));
+      $scope.minMax[party]['min'] = Math.min($scope.minMax[party]['min'], proc);
+      $scope.minMax[party]['max'] = Math.max($scope.minMax[party]['max'], proc);
+    };
 
     // Parse CSV eleection data from file into a ["LAN + KOM + VALDIST"] dictionary
     var loadElectionData = function(file) {
+
       var deferred = $q.defer();
 
       var dict = {};
@@ -36,6 +68,19 @@ angular.module('kartanalysApp')
         step: function(row) {
           var data = row.data[0];
           dict[data.LAN + data.KOM + data.VALDIST] = data;
+
+          // Only look at shlm data
+          if (data.LAN === "01" && data.KOM === "80") {
+            updateMinMax('SD', data);
+            updateMinMax('V', data);
+            updateMinMax('S', data);
+            updateMinMax('MP', data);
+            updateMinMax('FI', data);
+            updateMinMax('C', data);
+            updateMinMax('FP', data);
+            updateMinMax('M', data);
+            updateMinMax('KD', data);
+          }
         },
         complete: function() {
           deferred.resolve(dict);
@@ -60,15 +105,21 @@ angular.module('kartanalysApp')
       var deferred = $q.defer();
 
       function onEachFeature(feature, layer) {
+        if (!$scope.lockHiLow) {
+          $scope.lowLevel = $scope.minMax[$scope.party].min;
+          $scope.highLevel = $scope.minMax[$scope.party].max;
+        }
+
         var partyProc = parseFloat(layer.feature.electionData[$scope.party + " proc"].replace(',', '.'));
         var popupTitle = feature.properties.VD + ": " + feature.properties.VD_NAMN;
 
         var val = (partyProc - $scope.lowLevel) / ($scope.highLevel - $scope.lowLevel);
-        var opacity = partyProc < $scope.lowLevel ? 0 : 0.8 * Math.min(1.0, val);
+        val = Math.pow(val, 1.3);
+        var opacity = partyProc < $scope.lowLevel ? 0 : 0.9 * Math.min(1.0, val);
 
         layer.bindPopup(popupTitle + "<br />" + $scope.party + ": " + partyProc + "%");
-        if (partyProc > 8.0) {
-          layer.options.fillColor = "blue";
+        if (val > 0.2) {
+          layer.options.fillColor = partyColor[$scope.party];
           layer.options.fillOpacity = opacity;
         }
       }
