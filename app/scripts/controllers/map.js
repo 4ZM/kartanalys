@@ -121,7 +121,30 @@ angular.module('kartanalysApp')
         val = Math.pow(val, 1.3);
         var opacity = partyProc < $scope.lowLevel ? 0 : 0.9 * Math.min(1.0, val);
 
-        layer.bindPopup(popupTitle + "<br />" + $scope.party + ": " + partyProc + "%");
+        var statsString = function(party) {
+          var partyStr = party.length === 1 ? "&nbsp;" + party : party;
+          var formatFloat = function(val) {
+            return val < 10.0 ? "&nbsp;" + val.toFixed(2) : "" + val.toFixed(2);
+          };
+          return "<br />" +
+            (party === $scope.party ? "<b>" : "") +
+            partyStr  + ": " +
+            formatFloat(atof(layer.feature.electionData[party + " proc"])) + "% " +
+            "(" + formatFloat($scope.minMax[party]['min']) + "% - " +
+            formatFloat($scope.minMax[party]['max']) + "%)" +
+            (party === $scope.party ? "</b>" : "") ;
+        };
+
+        layer.bindPopup('<span style="font-family:monospace;">' + popupTitle +
+                        statsString("SD") +
+                        statsString("V") +
+                        statsString("S") +
+                        statsString("MP") +
+                        statsString("FI") +
+                        statsString("C") +
+                        statsString("FP") +
+                        statsString("M") +
+                        statsString("KD") + '</span>');
         if (val > 0.2) {
           layer.options.fillColor = partyColor[$scope.party];
           layer.options.fillOpacity = opacity;
