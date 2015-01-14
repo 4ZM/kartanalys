@@ -8,7 +8,26 @@
 <br />
 
 <div class="row">
-  <div class="col-md-12 text-right">
+  <div class="col-md-6">
+    <div class="btn-group dropup">
+      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+        {{party}} &nbsp; <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+        <li><a ng-click="party = 'SD'">SD</a></li>
+        <li class="divider"></li>
+        <li><a ng-click="party = 'V'">V</a></li>
+        <li><a ng-click="party = 'S'">S</a></li>
+        <li><a ng-click="party = 'MP'">MP</a></li>
+        <li><a ng-click="party = 'C'">C</a></li>
+        <li><a ng-click="party = 'FP'">FP</a></li>
+        <li><a ng-click="party = 'M'">M</a></li>
+        <li><a ng-click="party = 'KD'">KD</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-md-6 text-right">
     <button
        type="button"
        class="btn btn-primary"
