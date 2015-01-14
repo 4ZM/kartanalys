@@ -17,6 +17,9 @@ angular.module('kartanalysApp')
     };
 
     $scope.busy = false;
+    $scope.lowLevel = 5.0;
+    $scope.highLevel = 15.0;
+    $scope.party = "SD";
 
     // Parse CSV eleection data from file into a ["LAN + KOM + VALDIST"] dictionary
     var loadElectionData = function(file) {
@@ -57,13 +60,16 @@ angular.module('kartanalysApp')
       var deferred = $q.defer();
 
       function onEachFeature(feature, layer) {
-        var sdProc = parseFloat(layer.feature.electionData["SD proc"].replace(',', '.'));
+        var partyProc = parseFloat(layer.feature.electionData[$scope.party + " proc"].replace(',', '.'));
         var popupTitle = feature.properties.VD + ": " + feature.properties.VD_NAMN;
 
-        layer.bindPopup(popupTitle + "<br />SD: " + sdProc + "%");
-        if (sdProc > 8.0) {
+        var val = (partyProc - $scope.lowLevel) / ($scope.highLevel - $scope.lowLevel);
+        var opacity = partyProc < $scope.lowLevel ? 0 : 0.8 * Math.min(1.0, val);
+
+        layer.bindPopup(popupTitle + "<br />" + $scope.party + ": " + partyProc + "%");
+        if (partyProc > 8.0) {
           layer.options.fillColor = "blue";
-          layer.options.fillOpacity = 0.5;
+          layer.options.fillOpacity = opacity;
         }
       }
 
@@ -72,7 +78,7 @@ angular.module('kartanalysApp')
           data: data,
           style: {
             weight: 1,
-            opacity: 1,
+            opacity: 0.3,
             color: 'red',
             fillOpacity: 0
           },
