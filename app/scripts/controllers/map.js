@@ -68,7 +68,7 @@ angular.module('kartanalysApp')
         header: true,
         delimiter: ";",
         download: true,
-        worker: true,
+        // Disabled due to minification problems: worker: true,
         step: function(row) {
           var data = row.data[0];
           dict[data.LAN + data.KOM + data.VALDIST] = data;
