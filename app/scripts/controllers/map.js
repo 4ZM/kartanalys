@@ -105,16 +105,16 @@ angular.module('kartanalysApp')
       });
     };
 
-    var makeGeoJson = function(data) {
+    var makeGeoJson = function(party, data) {
       var deferred = $q.defer();
 
       function onEachFeature(feature, layer) {
         if (!$scope.lockHiLow) {
-          $scope.lowLevel = $scope.minMax[$scope.party].min;
-          $scope.highLevel = $scope.minMax[$scope.party].max;
+          $scope.lowLevel = $scope.minMax[party].min;
+          $scope.highLevel = $scope.minMax[party].max;
         }
 
-        var partyProc = atof(layer.feature.electionData[$scope.party + " proc"]);
+        var partyProc = atof(layer.feature.electionData[party + " proc"]);
         var popupTitle = feature.properties.VD + ": " + feature.properties.VD_NAMN;
 
         var val = (partyProc - $scope.lowLevel) / ($scope.highLevel - $scope.lowLevel);
@@ -146,23 +146,21 @@ angular.module('kartanalysApp')
                         statsString("M") +
                         statsString("KD") + '</span>');
         if (val > 0.2) {
-          layer.options.fillColor = partyColor[$scope.party];
+          layer.options.fillColor = partyColor[party];
           layer.options.fillOpacity = opacity;
         }
       }
 
       var geoJson = {
-        geojson: {
-          data: data,
-          style: {
-            weight: 1,
-            opacity: 0.3,
-            color: 'red',
-            fillOpacity: 0
+        data: data,
+        style: {
+          weight: 1,
+          opacity: 0.3,
+          color: 'red',
+          fillOpacity: 0
           },
-          onEachFeature: onEachFeature,
-          resetStyleOnMouseout: true
-        }
+        onEachFeature: onEachFeature,
+        resetStyleOnMouseout: true
       };
 
       deferred.resolve(geoJson);
@@ -173,12 +171,19 @@ angular.module('kartanalysApp')
     $scope.load = function() {
       $scope.busy = true;
       ngProgress.start();
-      loadElectionData('/data/2014_riksdagsval_per_valdistrikt.skv')
-        .then(loadGeoJson)
-        .then(makeGeoJson)
-        .then(function(geoJson) {
+      var csv = loadElectionData('/data/2014_riksdagsval_per_valdistrikt.skv');
+      var g1 = csv.then(loadGeoJson).then(_.partial(makeGeoJson, $scope.party))
+          .then(function(geoJson) {
+            angular.extend($scope, { geoJsonVar: geoJson });
+          });
+      var g2 = csv.then(loadGeoJson).then(_.partial(makeGeoJson, 'SD'))
+          .then(function(geoJson) {
+            angular.extend($scope, { geoJsonSD: geoJson });
+          });
+
+      $q.all([g1, g2])
+        .then(function(res) {
           ngProgress.complete();
-          angular.extend($scope, geoJson);
           $scope.busy = false;
         });
     };
