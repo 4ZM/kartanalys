@@ -95,7 +95,7 @@ angular.module('kartanalysApp')
     };
 
     var loadGeoJson = function(electionData) {
-      return $http.get("/data/valkretsar.geojson").then(function(res) {
+      return $http.get("data/valkretsar.geojson").then(function(res) {
 
         _(res.data.features).forEach(function(f) {
           f.electionData = electionData[f.properties.VD];
@@ -173,7 +173,7 @@ angular.module('kartanalysApp')
     $scope.load = function() {
       $scope.busy = true;
       ngProgress.start();
-      loadElectionData('/data/2014_riksdagsval_per_valdistrikt.skv')
+      loadElectionData('data/valdata.skv')
         .then(loadGeoJson)
         .then(makeGeoJson)
         .then(function(geoJson) {
